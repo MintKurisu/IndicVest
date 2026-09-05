@@ -12,7 +12,7 @@ namespace IndicVest.Infrastructure.Persistence.EntityConfigurations.Financial
             builder.HasKey(x => x.IdReturnRate);
             builder.ToTable("ReturnRates", t =>
             {
-                t.HasCheckConstraint("CK_ReturnRate_MinLessThanMax", "MinReturnRate < MaxReturnRate");
+                t.HasCheckConstraint("CK_ReturnRate_MinLessThanMax", "\"MinReturnRate\" < \"MaxReturnRate\"");
             });
             #endregion
 

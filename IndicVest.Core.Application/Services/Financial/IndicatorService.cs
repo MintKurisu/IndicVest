@@ -33,13 +33,15 @@ namespace IndicVest.Core.Application.Services.Financial
             }).ToList();
         }
 
-        public async Task<List<IndicatorDto>> GetByCountryAndYear(int countryId, int year)
+        public async Task<List<IndicatorDto>> GetByCountryAndYear(int year, List<int> countryIds, List<int> macroIds)
         {
-            var entities = await _indicatorRepository.GetAllListWithIncludeAsync(
+            var query = _indicatorRepository.GetAllQueryWithInclude(
                 new List<string> { "Country", "MacroIndicator" });
 
-            return entities
-                .Where(i => i.IdCountry == countryId && i.Year == year)
+            return await query
+                .Where(i => i.Year == year
+                    && countryIds.Contains(i.IdCountry)
+                    && macroIds.Contains(i.IdMacroIndicator))
                 .Select(i => new IndicatorDto
                 {
                     IdIndicator = i.IdIndicator,
@@ -47,9 +49,10 @@ namespace IndicVest.Core.Application.Services.Financial
                     IdMacroIndicator = i.IdMacroIndicator,
                     Value = i.Value,
                     Year = i.Year,
-                    CountryName = i.Country?.Name,
-                    MacroIndicatorName = i.MacroIndicator?.Name
-                }).ToList();
+                    CountryName = i.Country.Name,
+                    MacroIndicatorName = i.MacroIndicator.Name
+                })
+                .ToListAsync();
         }
 
         public async Task<List<int>> GetDistinctYears()

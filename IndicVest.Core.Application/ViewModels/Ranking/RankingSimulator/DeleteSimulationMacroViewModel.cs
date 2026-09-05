@@ -1,4 +1,4 @@
-﻿namespace IndicVest.Core.Application.ViewModels.Financial.RankingSimulator
+﻿namespace IndicVest.Core.Application.ViewModels.Ranking.RankingSimulator
 {
     public class DeleteSimulationMacroViewModel
     {
