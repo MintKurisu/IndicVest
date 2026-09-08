@@ -2,12 +2,14 @@
 using IndicVest.Core.Application.Dtos.Financial;
 using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.ViewModels.Financial.MacroIndicator;
+using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IndicVestWebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
     public class MacroIndicatorController : ControllerBase
     {
         private readonly IMacroIndicatorService _macroIndicatorService;
@@ -21,8 +23,8 @@ namespace IndicVestWebApi.Controllers
             _validator = validator;
         }
 
-        // GET api/macroindicator
         [HttpGet]
+        [ProducesResponseType(typeof(List<MacroIndicatorDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
         {
             var dtos = await _macroIndicatorService.GetAllWithIncluded(
@@ -30,8 +32,9 @@ namespace IndicVestWebApi.Controllers
             return Ok(dtos);
         }
 
-        // GET api/macroindicator/{id}
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(MacroIndicatorDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
             var dto = await _macroIndicatorService.GetById(id);
@@ -39,8 +42,8 @@ namespace IndicVestWebApi.Controllers
             return Ok(dto);
         }
 
-        // GET api/macroindicator/remaining-weight
         [HttpGet("remaining-weight")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetRemainingWeight()
         {
             var all = await _macroIndicatorService.GetAll();
@@ -48,13 +51,15 @@ namespace IndicVestWebApi.Controllers
             return Ok(new { RemainingWeight = 1m - totalWeight, TotalWeight = totalWeight });
         }
 
-        // POST api/macroindicator
         [HttpPost]
+        [ProducesResponseType(typeof(MacroIndicatorDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Create([FromBody] SaveMacroIndicatorViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
-                return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+                return validation.Errors.ToValidationProblem(this);
 
             var existing = await _macroIndicatorService.GetAll();
 
@@ -80,13 +85,16 @@ namespace IndicVestWebApi.Controllers
             return CreatedAtAction(nameof(GetById), new { id = result!.IdMacroIndicator }, result);
         }
 
-        // PUT api/macroindicator/{id}
         [HttpPut("{id}")]
+        [ProducesResponseType(typeof(MacroIndicatorDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Update(int id, [FromBody] SaveMacroIndicatorViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
-                return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+                return validation.Errors.ToValidationProblem(this);
 
             var existing = await _macroIndicatorService.GetAll();
 
@@ -114,8 +122,9 @@ namespace IndicVestWebApi.Controllers
             return Ok(result);
         }
 
-        // DELETE api/macroindicator/{id}
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
             var exists = await _macroIndicatorService.GetById(id);

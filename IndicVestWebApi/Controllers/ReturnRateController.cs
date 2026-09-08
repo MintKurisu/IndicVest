@@ -2,12 +2,14 @@
 using IndicVest.Core.Application.Dtos.Financial;
 using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.ViewModels.Financial.ReturnRate;
+using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IndicVestWebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
     public class ReturnRateController : ControllerBase
     {
         private readonly IReturnRateService _returnRateService;
@@ -21,8 +23,9 @@ namespace IndicVestWebApi.Controllers
             _validator = validator;
         }
 
-        // GET api/returnrate
         [HttpGet]
+        [ProducesResponseType(typeof(ReturnRateDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Get()
         {
             var rates = await _returnRateService.GetAll();
@@ -31,13 +34,15 @@ namespace IndicVestWebApi.Controllers
             return Ok(config);
         }
 
-        // PUT api/returnrate
         [HttpPut]
+        [ProducesResponseType(typeof(ReturnRateDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update([FromBody] ReturnRateViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
-                return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+                return validation.Errors.ToValidationProblem(this);
 
             var rates = await _returnRateService.GetAll();
             var existing = rates.FirstOrDefault();

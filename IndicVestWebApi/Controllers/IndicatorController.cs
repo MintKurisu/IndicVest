@@ -2,12 +2,14 @@
 using IndicVest.Core.Application.Dtos.Financial;
 using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.ViewModels.Financial.Indicator;
+using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IndicVestWebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
     public class IndicatorController : ControllerBase
     {
         private readonly IIndicatorService _indicatorService;
@@ -24,8 +26,8 @@ namespace IndicVestWebApi.Controllers
             _validator = validator;
         }
 
-        // GET api/indicator
         [HttpGet]
+        [ProducesResponseType(typeof(List<IndicatorDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
         {
             var dtos = await _indicatorService.GetAllWithIncluded(
@@ -33,8 +35,9 @@ namespace IndicVestWebApi.Controllers
             return Ok(dtos);
         }
 
-        // GET api/indicator/{id}
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(IndicatorDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
             var dto = await _indicatorService.GetById(id);
@@ -42,16 +45,16 @@ namespace IndicVestWebApi.Controllers
             return Ok(dto);
         }
 
-        // GET api/indicator/years
         [HttpGet("years")]
+        [ProducesResponseType(typeof(List<int>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetDistinctYears()
         {
             var years = await _indicatorService.GetDistinctYears();
             return Ok(years);
         }
 
-        // GET api/indicator/by-country/{countryId}/year/{year}
         [HttpGet("by-country/{countryId}/year/{year}")]
+        [ProducesResponseType(typeof(List<IndicatorDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetByCountryAndYear(int countryId, int year)
         {
             var countryIds = new List<int> { countryId };
@@ -62,13 +65,15 @@ namespace IndicVestWebApi.Controllers
             return Ok(dtos);
         }
 
-        // POST api/indicator
         [HttpPost]
+        [ProducesResponseType(typeof(IndicatorDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Create([FromBody] SaveIndicatorViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
-                return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+                return validation.Errors.ToValidationProblem(this);
 
             var existing = await _indicatorService.GetByCountryYearAndMacro(
                 vm.IdCountry, vm.Year, vm.IdMacroIndicator);
@@ -88,13 +93,16 @@ namespace IndicVestWebApi.Controllers
             return CreatedAtAction(nameof(GetById), new { id = result!.IdIndicator }, result);
         }
 
-        // PUT api/indicator/{id}
         [HttpPut("{id}")]
+        [ProducesResponseType(typeof(IndicatorDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Update(int id, [FromBody] SaveIndicatorViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
-                return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+                return validation.Errors.ToValidationProblem(this);
 
             var existing = await _indicatorService.GetByCountryYearAndMacro(
                 vm.IdCountry, vm.Year, vm.IdMacroIndicator);
@@ -116,8 +124,9 @@ namespace IndicVestWebApi.Controllers
             return Ok(result);
         }
 
-        // DELETE api/indicator/{id}
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
             var exists = await _indicatorService.GetById(id);

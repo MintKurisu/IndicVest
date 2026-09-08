@@ -2,12 +2,14 @@
 using IndicVest.Core.Application.Dtos.Ranking;
 using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.ViewModels.Ranking.RankingSimulator;
+using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IndicVestWebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
     public class SimulationController : ControllerBase
     {
         private readonly ISimulationService _simulationService;
@@ -24,9 +26,8 @@ namespace IndicVestWebApi.Controllers
             _validator = validator;
         }
 
-        // GET api/simulation/available-macros
-        // Returns all available macroindicators for building a simulation
         [HttpGet("available-macros")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAvailableMacros()
         {
             var all = await _macroIndicatorService.GetAll();
@@ -39,9 +40,9 @@ namespace IndicVestWebApi.Controllers
             }));
         }
 
-        // POST api/simulation/validate-config
-        // Validates that the macro configuration sent by the frontend is valid before running the simulation
         [HttpPost("validate-config")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ValidateConfig([FromBody] List<MacroWithWeightDto> config)
         {
             if (config is null || !config.Any())
@@ -57,14 +58,13 @@ namespace IndicVestWebApi.Controllers
 
                 var validation = await _validator.ValidateAsync(vm);
                 if (!validation.IsValid)
-                    return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+                    return validation.Errors.ToValidationProblem(this);
             }
 
             var totalWeight = config.Sum(c => c.Weight);
             if (Math.Abs(totalWeight - 1m) > 0.0001m)
                 return BadRequest($"Total weight must equal 1. Current: {totalWeight:F4}");
 
-            // Verify that the macros exist
             var allMacros = await _macroIndicatorService.GetAll();
             var allIds = allMacros.Select(m => m.IdMacroIndicator).ToHashSet();
             var invalidIds = config.Where(c => !allIds.Contains(c.IdMacroIndicator)).ToList();
@@ -75,16 +75,13 @@ namespace IndicVestWebApi.Controllers
             return Ok(new { Valid = true, TotalWeight = totalWeight });
         }
 
-        // POST api/simulation/run
-        // The frontend sends the complete configuration + the year and the backend runs the simulation
         [HttpPost("run")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Run([FromBody] SimulationRequestViewModel vm)
         {
             if (vm.Configuration is null || !vm.Configuration.Any())
                 return BadRequest("Simulation configuration cannot be empty.");
-
-            var canAdd = await _simulationService.AddMacroToSimulation(
-                new List<MacroWithWeightDto>(), vm.Configuration.First().IdMacroIndicator, vm.Configuration.First().Weight);
 
             var result = await _simulationService.RunSimulation(vm.Configuration, vm.Year);
 
@@ -105,4 +102,5 @@ namespace IndicVestWebApi.Controllers
             });
         }
     }
+
 }

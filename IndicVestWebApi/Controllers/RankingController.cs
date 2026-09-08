@@ -7,6 +7,7 @@ namespace IndicVestWebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
     public class RankingController : ControllerBase
     {
         private readonly IMacroIndicatorService _macroIndicatorService;
@@ -23,16 +24,17 @@ namespace IndicVestWebApi.Controllers
             _rankingCalculationService = rankingCalculationService;
         }
 
-        // GET api/ranking/years
         [HttpGet("years")]
+        [ProducesResponseType(typeof(List<int>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAvailableYears()
         {
             var years = await _indicatorService.GetDistinctYears();
             return Ok(years);
         }
 
-        // POST api/ranking/calculate
         [HttpPost("calculate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Calculate([FromBody] int selectedYear)
         {
             var allMacros = await _macroIndicatorService.GetAll();
