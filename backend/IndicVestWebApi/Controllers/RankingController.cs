@@ -2,13 +2,11 @@
 using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.Interfaces.Ranking;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace IndicVestWebApi.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Produces("application/json")]
-    public class RankingController : ControllerBase
+    public class RankingController : BaseApiController
     {
         private readonly IMacroIndicatorService _macroIndicatorService;
         private readonly IIndicatorService _indicatorService;
@@ -25,7 +23,12 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpGet("years")]
-        [ProducesResponseType(typeof(List<int>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<int>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Get available years for ranking",
+            Description = "Retrieves a list of years for which indicator data is available to calculate rankings."
+        )]
         public async Task<IActionResult> GetAvailableYears()
         {
             var years = await _indicatorService.GetDistinctYears();
@@ -35,6 +38,11 @@ namespace IndicVestWebApi.Controllers
         [HttpPost("calculate")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Calculate country ranking",
+            Description = "Calculates investment attraction ranking and scoring for all countries for a specific selected year based on configured macroindicator weights."
+        )]
         public async Task<IActionResult> Calculate([FromBody] int selectedYear)
         {
             var allMacros = await _macroIndicatorService.GetAll();

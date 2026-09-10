@@ -4,13 +4,11 @@ using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.ViewModels.Financial.Indicator;
 using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace IndicVestWebApi.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Produces("application/json")]
-    public class IndicatorController : ControllerBase
+    public class IndicatorController : BaseApiController
     {
         private readonly IIndicatorService _indicatorService;
         private readonly IMacroIndicatorService _macroIndicatorService;
@@ -27,7 +25,12 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(List<IndicatorDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<IndicatorDto>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Get all indicators",
+            Description = "Retrieves all registered indicator entries including Country and MacroIndicator details."
+        )]
         public async Task<IActionResult> GetAll()
         {
             var dtos = await _indicatorService.GetAllWithIncluded(
@@ -36,8 +39,13 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(IndicatorDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IndicatorDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Get indicator by ID",
+            Description = "Retrieves an indicator entry by its unique identifier."
+        )]
         public async Task<IActionResult> GetById(int id)
         {
             var dto = await _indicatorService.GetById(id);
@@ -46,7 +54,12 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpGet("years")]
-        [ProducesResponseType(typeof(List<int>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<int>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Get distinct years",
+            Description = "Retrieves a distinct list of years containing indicator data."
+        )]
         public async Task<IActionResult> GetDistinctYears()
         {
             var years = await _indicatorService.GetDistinctYears();
@@ -54,7 +67,12 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpGet("by-country/{countryId}/year/{year}")]
-        [ProducesResponseType(typeof(List<IndicatorDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<IndicatorDto>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Get indicators by country and year",
+            Description = "Retrieves all indicators associated with a specific country ID and year."
+        )]
         public async Task<IActionResult> GetByCountryAndYear(int countryId, int year)
         {
             var countryIds = new List<int> { countryId };
@@ -66,9 +84,14 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(IndicatorDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(IndicatorDto))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Create indicator",
+            Description = "Creates a new indicator record for a country, macroindicator, and year."
+        )]
         public async Task<IActionResult> Create([FromBody] SaveIndicatorViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
@@ -94,10 +117,15 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(IndicatorDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IndicatorDto))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Update indicator",
+            Description = "Updates an existing indicator record by its unique identifier."
+        )]
         public async Task<IActionResult> Update(int id, [FromBody] SaveIndicatorViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
@@ -127,6 +155,11 @@ namespace IndicVestWebApi.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Delete indicator",
+            Description = "Deletes an indicator entry from the system by its ID."
+        )]
         public async Task<IActionResult> Delete(int id)
         {
             var exists = await _indicatorService.GetById(id);

@@ -4,13 +4,11 @@ using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.ViewModels.Financial.ReturnRate;
 using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace IndicVestWebApi.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Produces("application/json")]
-    public class ReturnRateController : ControllerBase
+    public class ReturnRateController : BaseApiController
     {
         private readonly IReturnRateService _returnRateService;
         private readonly IValidator<ReturnRateViewModel> _validator;
@@ -24,8 +22,13 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(ReturnRateDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ReturnRateDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Get return rate configuration",
+            Description = "Retrieves the global minimum and maximum return rate configuration."
+        )]
         public async Task<IActionResult> Get()
         {
             var rates = await _returnRateService.GetAll();
@@ -35,9 +38,14 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpPut]
-        [ProducesResponseType(typeof(ReturnRateDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ReturnRateDto))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Update return rate configuration",
+            Description = "Updates the global minimum and maximum return rate boundaries."
+        )]
         public async Task<IActionResult> Update([FromBody] ReturnRateViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);

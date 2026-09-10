@@ -4,13 +4,11 @@ using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.ViewModels.Ranking.RankingSimulator;
 using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace IndicVestWebApi.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Produces("application/json")]
-    public class SimulationController : ControllerBase
+    public class SimulationController : BaseApiController
     {
         private readonly ISimulationService _simulationService;
         private readonly IMacroIndicatorService _macroIndicatorService;
@@ -28,6 +26,11 @@ namespace IndicVestWebApi.Controllers
 
         [HttpGet("available-macros")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Get available macroindicators for simulation",
+            Description = "Retrieves all macroindicators along with their original weights and configuration for simulation setups."
+        )]
         public async Task<IActionResult> GetAvailableMacros()
         {
             var all = await _macroIndicatorService.GetAll();
@@ -42,7 +45,12 @@ namespace IndicVestWebApi.Controllers
 
         [HttpPost("validate-config")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Validate simulation configuration",
+            Description = "Validates the custom weight distribution and existence of macroindicators before running a simulation."
+        )]
         public async Task<IActionResult> ValidateConfig([FromBody] List<MacroWithWeightDto> config)
         {
             if (config is null || !config.Any())
@@ -78,6 +86,11 @@ namespace IndicVestWebApi.Controllers
         [HttpPost("run")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Run simulation",
+            Description = "Executes a custom ranking calculation using user-defined macroindicator weights for a given year."
+        )]
         public async Task<IActionResult> Run([FromBody] SimulationRequestViewModel vm)
         {
             if (vm.Configuration is null || !vm.Configuration.Any())

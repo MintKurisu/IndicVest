@@ -4,13 +4,11 @@ using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.ViewModels.Financial.Country;
 using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace IndicVestWebApi.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Produces("application/json")]
-    public class CountryController : ControllerBase
+    public class CountryController : BaseApiController
     {
         private readonly ICountryService _countryService;
         private readonly IValidator<SaveCountryViewModel> _validator;
@@ -22,7 +20,12 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(List<CountryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<CountryDto>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Get all countries",
+            Description = "Retrieves a list of all registered countries in the system including their associated indicators."
+        )]
         public async Task<IActionResult> GetAll()
         {
             var dtos = await _countryService.GetAllWithIncluded(new List<string> { "Indicators" });
@@ -30,8 +33,13 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(CountryDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CountryDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Get country by ID",
+            Description = "Retrieves specific country details using its unique identifier."
+        )]
         public async Task<IActionResult> GetById(int id)
         {
             var dto = await _countryService.GetById(id);
@@ -40,9 +48,14 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(CountryDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(CountryDto))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Create country",
+            Description = "Creates a new country record in the system after validating unique name and ISO code."
+        )]
         public async Task<IActionResult> Create([FromBody] SaveCountryViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
@@ -61,10 +74,15 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(CountryDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CountryDto))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Update country",
+            Description = "Updates existing country information by its ID after validating uniqueness rules."
+        )]
         public async Task<IActionResult> Update(int id, [FromBody] SaveCountryViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
@@ -86,6 +104,11 @@ namespace IndicVestWebApi.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Delete country",
+            Description = "Deletes a country record from the system by its ID."
+        )]
         public async Task<IActionResult> Delete(int id)
         {
             var exists = await _countryService.GetById(id);
