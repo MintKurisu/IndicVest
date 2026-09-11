@@ -1,6 +1,6 @@
 ﻿using IndicVest.Core.Application.Dtos.Ranking;
 
-namespace IndicVest.Core.Application.ViewModels.Ranking.RankingSimulator
+namespace IndicVest.Core.Application.ViewModels.Simulation
 {
     public class SimulationRequestViewModel
     {

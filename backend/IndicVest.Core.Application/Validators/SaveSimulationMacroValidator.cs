@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using IndicVest.Core.Application.ViewModels.Ranking.RankingSimulator;
+using IndicVest.Core.Application.ViewModels.Simulation;
 
 namespace IndicVest.Core.Application.Validators
 {

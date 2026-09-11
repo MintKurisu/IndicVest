@@ -1,6 +1,7 @@
 ﻿using IndicVest.Core.Application.Dtos.Ranking;
 using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.Interfaces.Ranking;
+using IndicVest.Core.Application.ViewModels.Ranking;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -36,7 +37,7 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpPost("calculate")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RankingResponseDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [SwaggerOperation(
@@ -63,17 +64,17 @@ namespace IndicVestWebApi.Controllers
             if (!result.Success)
                 return BadRequest(new { result.ErrorMessage });
 
-            return Ok(new
+            return Ok(new RankingResponseDto
             {
                 Year = selectedYear,
-                Rankings = result.Results.Select((r, i) => new
+                Rankings = result.Results.Select((r, i) => new RankingItemResponseDto
                 {
                     Position = i + 1,
-                    r.CountryName,
-                    r.IsoCode,
-                    r.Scoring,
-                    r.EstimatedReturnRate
-                })
+                    CountryName = r.CountryName,
+                    IsoCode = r.IsoCode,
+                    Scoring = r.Scoring,
+                    EstimatedReturnRate = r.EstimatedReturnRate
+                }).ToList()
             });
         }
     }

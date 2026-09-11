@@ -69,28 +69,12 @@ namespace IndicVestWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [SwaggerOperation(
-            Summary = "Create macroindicator",
-            Description = "Creates a new macroindicator ensuring the total weight limit of 1.0 is not exceeded."
-        )]
+        [SwaggerOperation(Summary = "Create macroindicator", Description = "Creates a new macroindicator ensuring the total weight limit of 1.0 is not exceeded.")]
         public async Task<IActionResult> Create([FromBody] SaveMacroIndicatorViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
                 return validation.Errors.ToValidationProblem(this);
-
-            var existing = await _macroIndicatorService.GetAll();
-
-            if (existing.Any(m => m.Name.Equals(vm.Name, StringComparison.OrdinalIgnoreCase)))
-                return Conflict("A macroindicator with this name already exists.");
-
-            var totalWeight = existing.Sum(m => m.Weight);
-
-            if (totalWeight >= 1m)
-                return BadRequest("No more macroindicators can be added — total weight is already 1.");
-
-            if (totalWeight + vm.Weight > 1m)
-                return BadRequest($"Weight exceeds the limit. Available: {1m - totalWeight:F4}");
 
             var dto = new MacroIndicatorDto
             {
@@ -109,28 +93,12 @@ namespace IndicVestWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [SwaggerOperation(
-            Summary = "Update macroindicator",
-            Description = "Updates an existing macroindicator details or weight allocation by its ID."
-        )]
+        [SwaggerOperation(Summary = "Update macroindicator", Description = "Updates an existing macroindicator details or weight allocation by its ID.")]
         public async Task<IActionResult> Update(int id, [FromBody] SaveMacroIndicatorViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
                 return validation.Errors.ToValidationProblem(this);
-
-            var existing = await _macroIndicatorService.GetAll();
-
-            if (existing.Any(m => m.IdMacroIndicator != id &&
-                m.Name.Equals(vm.Name, StringComparison.OrdinalIgnoreCase)))
-                return Conflict("A macroindicator with this name already exists.");
-
-            var otherWeight = existing
-                .Where(m => m.IdMacroIndicator != id)
-                .Sum(m => m.Weight);
-
-            if (otherWeight + vm.Weight > 1m)
-                return BadRequest($"Weight exceeds the limit. Available: {1m - otherWeight:F4}");
 
             var dto = new MacroIndicatorDto
             {

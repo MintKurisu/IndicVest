@@ -3,6 +3,7 @@ using IndicVest.Core.Application.Dtos.Financial;
 using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.Services.Base;
 using IndicVest.Core.Domain.Entities.Financial;
+using IndicVest.Core.Domain.Exceptions;
 using IndicVest.Core.Domain.Interfaces.Financial;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,6 +32,26 @@ namespace IndicVest.Core.Application.Services.Financial
                 CountryName = i.Country?.Name,
                 MacroIndicatorName = i.MacroIndicator?.Name
             }).ToList();
+        }
+
+        public override async Task<IndicatorDto?> AddAsync(IndicatorDto dto)
+        {
+            await EnsureNoDuplicateAsync(dto.IdCountry, dto.Year, dto.IdMacroIndicator, excludeId: null);
+            return await base.AddAsync(dto);
+        }
+
+        public override async Task<IndicatorDto?> UpdateAsync(IndicatorDto dto, int id)
+        {
+            await EnsureNoDuplicateAsync(dto.IdCountry, dto.Year, dto.IdMacroIndicator, excludeId: id);
+            return await base.UpdateAsync(dto, id);
+        }
+
+        private async Task EnsureNoDuplicateAsync(int countryId, int year, int macroId, int? excludeId)
+        {
+            var existing = await GetByCountryYearAndMacro(countryId, year, macroId);
+
+            if (existing is not null && existing.IdIndicator != excludeId)
+                throw new ConflictException("An indicator already exists for this country, year and macroindicator.");
         }
 
         public async Task<List<IndicatorDto>> GetByCountryAndYear(int year, List<int> countryIds, List<int> macroIds)

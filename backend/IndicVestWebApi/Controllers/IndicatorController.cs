@@ -88,21 +88,12 @@ namespace IndicVestWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [SwaggerOperation(
-            Summary = "Create indicator",
-            Description = "Creates a new indicator record for a country, macroindicator, and year."
-        )]
+        [SwaggerOperation(Summary = "Create indicator", Description = "Creates a new indicator record for a country, macroindicator, and year.")]
         public async Task<IActionResult> Create([FromBody] SaveIndicatorViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
                 return validation.Errors.ToValidationProblem(this);
-
-            var existing = await _indicatorService.GetByCountryYearAndMacro(
-                vm.IdCountry, vm.Year, vm.IdMacroIndicator);
-
-            if (existing is not null)
-                return Conflict("An indicator already exists for this country, year and macroindicator.");
 
             var dto = new IndicatorDto
             {
@@ -122,21 +113,12 @@ namespace IndicVestWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [SwaggerOperation(
-            Summary = "Update indicator",
-            Description = "Updates an existing indicator record by its unique identifier."
-        )]
+        [SwaggerOperation(Summary = "Update indicator", Description = "Updates an existing indicator record by its unique identifier.")]
         public async Task<IActionResult> Update(int id, [FromBody] SaveIndicatorViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
                 return validation.Errors.ToValidationProblem(this);
-
-            var existing = await _indicatorService.GetByCountryYearAndMacro(
-                vm.IdCountry, vm.Year, vm.IdMacroIndicator);
-
-            if (existing is not null && existing.IdIndicator != id)
-                return Conflict("An indicator already exists for this country, year and macroindicator.");
 
             var dto = new IndicatorDto
             {

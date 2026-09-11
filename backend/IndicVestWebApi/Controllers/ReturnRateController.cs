@@ -42,28 +42,14 @@ namespace IndicVestWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [SwaggerOperation(
-            Summary = "Update return rate configuration",
-            Description = "Updates the global minimum and maximum return rate boundaries."
-        )]
+        [SwaggerOperation(Summary = "Update return rate configuration", Description = "Updates the global minimum and maximum return rate boundaries.")]
         public async Task<IActionResult> Update([FromBody] ReturnRateViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
                 return validation.Errors.ToValidationProblem(this);
 
-            var rates = await _returnRateService.GetAll();
-            var existing = rates.FirstOrDefault();
-            if (existing is null) return NotFound("No return rate configuration found.");
-
-            var dto = new ReturnRateDto
-            {
-                IdReturnRate = existing.IdReturnRate,
-                MinReturnRate = vm.MinReturnRate,
-                MaxReturnRate = vm.MaxReturnRate
-            };
-
-            var result = await _returnRateService.UpdateAsync(dto, existing.IdReturnRate);
+            var result = await _returnRateService.UpdateConfigAsync(vm.MinReturnRate, vm.MaxReturnRate);
             return Ok(result);
         }
     }

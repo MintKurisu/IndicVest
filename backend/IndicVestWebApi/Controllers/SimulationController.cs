@@ -1,7 +1,8 @@
 ﻿using FluentValidation;
 using IndicVest.Core.Application.Dtos.Ranking;
 using IndicVest.Core.Application.Interfaces.Financial;
-using IndicVest.Core.Application.ViewModels.Ranking.RankingSimulator;
+using IndicVest.Core.Application.ViewModels.Ranking;
+using IndicVest.Core.Application.ViewModels.Simulation;
 using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -25,7 +26,7 @@ namespace IndicVestWebApi.Controllers
         }
 
         [HttpGet("available-macros")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<MacroWithWeightDto>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [SwaggerOperation(
             Summary = "Get available macroindicators for simulation",
@@ -34,17 +35,17 @@ namespace IndicVestWebApi.Controllers
         public async Task<IActionResult> GetAvailableMacros()
         {
             var all = await _macroIndicatorService.GetAll();
-            return Ok(all.Select(m => new
+            return Ok(all.Select(m => new MacroWithWeightDto
             {
-                m.IdMacroIndicator,
-                m.Name,
-                m.Weight,
-                m.IsHighBetter
+                IdMacroIndicator = m.IdMacroIndicator,
+                Name = m.Name,
+                Weight = m.Weight,
+                IsHighBetter = m.IsHighBetter
             }));
         }
 
         [HttpPost("validate-config")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ValidateConfigResponseDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [SwaggerOperation(
@@ -80,11 +81,11 @@ namespace IndicVestWebApi.Controllers
             if (invalidIds.Any())
                 return BadRequest("One or more macroindicators in the configuration do not exist.");
 
-            return Ok(new { Valid = true, TotalWeight = totalWeight });
+            return Ok(new ValidateConfigResponseDto { Valid = true, TotalWeight = totalWeight });
         }
 
         [HttpPost("run")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RankingResponseDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [SwaggerOperation(
@@ -101,19 +102,19 @@ namespace IndicVestWebApi.Controllers
             if (!result.Success)
                 return BadRequest(new { result.ErrorMessage });
 
-            return Ok(new
+            return Ok(new RankingResponseDto
             {
-                vm.Year,
-                Rankings = result.Results.Select((r, i) => new
+                Year = vm.Year,
+                Rankings = result.Results.Select((r, i) => new RankingItemResponseDto
                 {
                     Position = i + 1,
-                    r.CountryName,
-                    r.IsoCode,
-                    r.Scoring,
-                    r.EstimatedReturnRate
-                })
+                    CountryName = r.CountryName,
+                    IsoCode = r.IsoCode,
+                    Scoring = r.Scoring,
+                    EstimatedReturnRate = r.EstimatedReturnRate
+                }).ToList()
             });
         }
-    }
 
+    }
 }

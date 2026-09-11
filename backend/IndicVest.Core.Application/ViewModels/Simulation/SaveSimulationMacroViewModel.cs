@@ -1,4 +1,4 @@
-﻿namespace IndicVest.Core.Application.ViewModels.Ranking.RankingSimulator
+﻿namespace IndicVest.Core.Application.ViewModels.Simulation
 {
     public class SaveSimulationMacroViewModel
     {
@@ -7,6 +7,5 @@
         public decimal Weight { get; set; }
         public string? Name { get; set; }
         public decimal RemainingWeight { get; set; }
-        public List<MacroOptionViewModel> AvailableMacros { get; set; } = new();
     }
 }

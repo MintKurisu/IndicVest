@@ -52,21 +52,12 @@ namespace IndicVestWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ValidationProblemDetails))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [SwaggerOperation(
-            Summary = "Create country",
-            Description = "Creates a new country record in the system after validating unique name and ISO code."
-        )]
+        [SwaggerOperation(Summary = "Create country", Description = "Creates a new country record in the system after validating unique name and ISO code.")]
         public async Task<IActionResult> Create([FromBody] SaveCountryViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
                 return validation.Errors.ToValidationProblem(this);
-
-            var existing = await _countryService.GetAll();
-            if (existing.Any(c => c.Name.Equals(vm.Name, StringComparison.OrdinalIgnoreCase)))
-                return Conflict("A country with this name already exists.");
-            if (existing.Any(c => c.ISOCode.Equals(vm.ISOCode, StringComparison.OrdinalIgnoreCase)))
-                return Conflict("A country with this ISO code already exists.");
 
             var dto = new CountryDto { Name = vm.Name, ISOCode = vm.ISOCode };
             var result = await _countryService.AddAsync(dto);
@@ -79,21 +70,12 @@ namespace IndicVestWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [SwaggerOperation(
-            Summary = "Update country",
-            Description = "Updates existing country information by its ID after validating uniqueness rules."
-        )]
+        [SwaggerOperation(Summary = "Update country", Description = "Updates existing country information by its ID after validating uniqueness rules.")]
         public async Task<IActionResult> Update(int id, [FromBody] SaveCountryViewModel vm)
         {
             var validation = await _validator.ValidateAsync(vm);
             if (!validation.IsValid)
                 return validation.Errors.ToValidationProblem(this);
-
-            var existing = await _countryService.GetAll();
-            if (existing.Any(c => c.IdCountry != id && c.Name.Equals(vm.Name, StringComparison.OrdinalIgnoreCase)))
-                return Conflict("A country with this name already exists.");
-            if (existing.Any(c => c.IdCountry != id && c.ISOCode.Equals(vm.ISOCode, StringComparison.OrdinalIgnoreCase)))
-                return Conflict("A country with this ISO code already exists.");
 
             var dto = new CountryDto { IdCountry = id, Name = vm.Name, ISOCode = vm.ISOCode };
             var result = await _countryService.UpdateAsync(dto, id);

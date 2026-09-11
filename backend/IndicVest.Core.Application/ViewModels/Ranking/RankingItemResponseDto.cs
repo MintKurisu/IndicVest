@@ -1,6 +1,6 @@
-﻿namespace IndicVest.Core.Application.ViewModels.Ranking.RankingSimulator
+﻿namespace IndicVest.Core.Application.ViewModels.Ranking
 {
-    public class RankingItemViewModel
+    public class RankingItemResponseDto
     {
         public int Position { get; set; }
         public string CountryName { get; set; } = string.Empty;

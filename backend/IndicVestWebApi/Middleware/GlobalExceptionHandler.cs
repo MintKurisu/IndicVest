@@ -21,6 +21,7 @@ namespace IndicVestWebApi.Middleware
             var (statusCode, title) = exception switch
             {
                 NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
+                ConflictException => (StatusCodes.Status409Conflict, "Conflict"),           // ← nuevo
                 ValidationException => (StatusCodes.Status400BadRequest, "Validation Error"),
                 Microsoft.EntityFrameworkCore.DbUpdateException => (StatusCodes.Status409Conflict, "Database Conflict"),
                 _ => (StatusCodes.Status500InternalServerError, "Server Error")
