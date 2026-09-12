@@ -11,7 +11,9 @@ namespace IndicVestWebApi.Extensions
             var groupedErrors = errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(
-                    g => char.ToLower(g.Key[0]) + g.Key[1..],
+                    g => string.IsNullOrEmpty(g.Key)
+                        ? "general"
+                        : char.ToLower(g.Key[0]) + g.Key[1..],
                     g => g.Select(e => e.ErrorMessage).ToArray()
                 );
 
