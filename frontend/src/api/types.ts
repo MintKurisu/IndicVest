@@ -1,3 +1,15 @@
+export interface Country {
+  idCountry: number
+  name: string
+  isoCode: string
+  indicatorsQuantity?: number
+}
+
+export interface SaveCountryPayload {
+  name: string
+  isoCode: string
+}
+
 export interface Indicator {
   idIndicator: number;
   idCountry: number;
