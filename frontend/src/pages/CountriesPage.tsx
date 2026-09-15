@@ -139,10 +139,22 @@ export function CountriesPage() {
                 return (
                   <tr
                     key={country.idCountry}
-                    className="border-t border-border hover:bg-surface-hover"
+                    className={`border-t transition-colors ${
+                      isEmpty
+                        ? "border-warning/20 bg-warning/5 hover:bg-warning/10"
+                        : "border-border hover:bg-surface-hover"
+                    }`}
                   >
                     <td className="px-4 py-3">
-                      <span className="font-medium">{country.name}</span>
+                      <div className="flex items-center gap-2">
+                        <Globe2
+                          size={14}
+                          className={
+                            isEmpty ? "text-warning" : "text-text-secondary"
+                          }
+                        />
+                        <span className="font-medium">{country.name}</span>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="rounded bg-bg px-2 py-0.5 font-mono text-xs tracking-wide text-text-secondary">

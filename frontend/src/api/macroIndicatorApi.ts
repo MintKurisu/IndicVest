@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { MacroIndicator, SaveMacroIndicatorPayload } from "./types";
+import type { MacroIndicator, SaveMacroIndicatorPayload, RemainingWeightInfo } from "./types";
 
 export const macroIndicatorApi = {
   getAll: () =>
@@ -8,7 +8,7 @@ export const macroIndicatorApi = {
     apiClient.get<MacroIndicator>(`/macroindicator/${id}`).then((r) => r.data),
   getRemainingWeight: () =>
     apiClient
-      .get<number>("/macroindicator/remaining-weight")
+      .get<RemainingWeightInfo>("/macroindicator/remaining-weight")
       .then((r) => r.data),
   create: (payload: SaveMacroIndicatorPayload) =>
     apiClient

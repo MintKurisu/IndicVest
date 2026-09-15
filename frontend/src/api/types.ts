@@ -10,6 +10,8 @@ export interface SaveCountryPayload {
   isoCode: string
 }
 
+// Indicator
+
 export interface Indicator {
   idIndicator: number;
   idCountry: number;
@@ -18,6 +20,13 @@ export interface Indicator {
   year: number;
   countryName?: string;
   macroIndicatorName?: string;
+}
+
+export interface SaveIndicatorPayload {
+  idCountry: number
+  idMacroIndicator: number
+  value: number
+  year: number
 }
 
 // MacroIndicator
@@ -33,6 +42,11 @@ export interface SaveMacroIndicatorPayload {
   name: string;
   weight: number;
   isHighBetter: boolean;
+}
+
+export interface RemainingWeightInfo {
+  remainingWeight: number
+  totalWeight: number
 }
 
 // ReturnRate
@@ -85,3 +99,5 @@ export interface SimulationRequest {
   year: number;
   configuration: MacroWithWeight[];
 }
+
+
