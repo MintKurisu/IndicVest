@@ -2,6 +2,8 @@
 using IndicVest.Core.Application.Dtos.Financial;
 using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.ViewModels.Financial.ReturnRate;
+using IndicVest.Core.Domain.Entities.Financial;
+using IndicVest.Core.Domain.Exceptions;
 using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -33,7 +35,7 @@ namespace IndicVestWebApi.Controllers
         {
             var rates = await _returnRateService.GetAll();
             var config = rates.FirstOrDefault();
-            if (config is null) return NotFound("No return rate configuration found.");
+            if (config is null) throw new NotFoundException(nameof(ReturnRate), "singleton config");
             return Ok(config);
         }
 

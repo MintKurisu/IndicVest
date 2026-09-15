@@ -2,6 +2,8 @@
 using IndicVest.Core.Application.Dtos.Financial;
 using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.ViewModels.Financial.Country;
+using IndicVest.Core.Domain.Entities.Financial;
+using IndicVest.Core.Domain.Exceptions;
 using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -43,7 +45,7 @@ namespace IndicVestWebApi.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var dto = await _countryService.GetById(id);
-            if (dto is null) return NotFound();
+            if (dto is null) throw new NotFoundException(nameof(Country), id);
             return Ok(dto);
         }
 
@@ -79,7 +81,7 @@ namespace IndicVestWebApi.Controllers
 
             var dto = new CountryDto { IdCountry = id, Name = vm.Name, ISOCode = vm.ISOCode };
             var result = await _countryService.UpdateAsync(dto, id);
-            if (result is null) return NotFound();
+            if (result is null) throw new NotFoundException(nameof(Country), id);
             return Ok(result);
         }
 
@@ -94,7 +96,7 @@ namespace IndicVestWebApi.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var exists = await _countryService.GetById(id);
-            if (exists is null) return NotFound();
+            if (exists is null) throw new NotFoundException(nameof(Country), id);
             await _countryService.DeleteAsync(id);
             return NoContent();
         }

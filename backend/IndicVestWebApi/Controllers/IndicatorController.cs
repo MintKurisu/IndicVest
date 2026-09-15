@@ -2,6 +2,8 @@
 using IndicVest.Core.Application.Dtos.Financial;
 using IndicVest.Core.Application.Interfaces.Financial;
 using IndicVest.Core.Application.ViewModels.Financial.Indicator;
+using IndicVest.Core.Domain.Entities.Financial;
+using IndicVest.Core.Domain.Exceptions;
 using IndicVestWebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -49,7 +51,7 @@ namespace IndicVestWebApi.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var dto = await _indicatorService.GetById(id);
-            if (dto is null) return NotFound();
+            if (dto is null) throw new NotFoundException(nameof(Indicator), id);
             return Ok(dto);
         }
 
@@ -130,7 +132,7 @@ namespace IndicVestWebApi.Controllers
             };
 
             var result = await _indicatorService.UpdateAsync(dto, id);
-            if (result is null) return NotFound();
+            if (result is null) throw new NotFoundException(nameof(Indicator), id);
             return Ok(result);
         }
 
@@ -145,7 +147,7 @@ namespace IndicVestWebApi.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var exists = await _indicatorService.GetById(id);
-            if (exists is null) return NotFound();
+            if (exists is null) throw new NotFoundException(nameof(Indicator), id);
             await _indicatorService.DeleteAsync(id);
             return NoContent();
         }
