@@ -8,14 +8,14 @@ namespace IndicVest.Core.Application.Validators
         public ReturnRateValidator()
         {
             RuleFor(x => x.MinReturnRate)
-                .GreaterThan(0).WithMessage("Minimum return rate must be greater than 0.");
+                .GreaterThanOrEqualTo(0)
+                .WithMessage("Minimum return rate cannot be negative.");
 
             RuleFor(x => x.MaxReturnRate)
-                .GreaterThan(0).WithMessage("Maximum return rate must be greater than 0.");
-
-            RuleFor(x => x)
-                .Must(x => x.MaxReturnRate > x.MinReturnRate)
-                .WithMessage("Maximum return rate must be greater than minimum return rate.");
+                .GreaterThan(x => x.MinReturnRate)
+                .WithMessage("Maximum return rate must be greater than minimum return rate.")
+                .LessThanOrEqualTo(100)
+                .WithMessage("Maximum return rate cannot exceed 100 (values are percentage points).");
         }
     }
 }
