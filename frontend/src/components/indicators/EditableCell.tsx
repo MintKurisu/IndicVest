@@ -43,7 +43,8 @@ export function EditableCell({ value, onCommit, isSaving }: EditableCellProps) {
           if (e.key === "Enter") commit();
           if (e.key === "Escape") setEditing(false);
         }}
-        className="w-full rounded bg-surface-hover px-2 py-1 text-right font-mono text-xs text-accent outline-none"
+        placeholder="Clear to delete"
+        className="w-full rounded bg-surface-hover px-2 py-1 text-right font-mono text-xs text-accent outline-none placeholder:text-text-secondary/50"
       />
     );
   }
@@ -52,7 +53,11 @@ export function EditableCell({ value, onCommit, isSaving }: EditableCellProps) {
     <button
       onDoubleClick={() => setEditing(true)}
       disabled={isSaving}
-      title="Double-click to edit"
+      title={
+        value !== null
+          ? "Double-click to edit · clear the value to delete"
+          : "Double-click to add a value"
+      }
       className={`w-full cursor-cell rounded px-2 py-1 text-right font-mono text-xs transition-colors hover:bg-surface-hover ${
         value === null ? "text-text-secondary" : "text-text-primary"
       } ${isSaving ? "opacity-50" : ""}`}

@@ -4,6 +4,8 @@ import type { SaveIndicatorPayload } from '../api/types'
 
 const INDICATORS_KEY = ['indicators']
 const YEARS_KEY = ['indicators', 'years']
+const COUNTRIES_KEY = ['countries']
+const MACRO_INDICATORS_KEY = ['macroIndicators'] 
 
 export function useIndicators() {
   return useQuery({
@@ -24,6 +26,8 @@ function useInvalidateIndicators() {
   return () => {
     queryClient.invalidateQueries({ queryKey: INDICATORS_KEY })
     queryClient.invalidateQueries({ queryKey: YEARS_KEY })
+    queryClient.invalidateQueries({ queryKey: COUNTRIES_KEY })
+    queryClient.invalidateQueries({ queryKey: MACRO_INDICATORS_KEY })
   }
 }
 

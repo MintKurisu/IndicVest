@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Database, Search, Globe2 } from "lucide-react";
+import { Database, Search, Globe2, Plus, X } from "lucide-react";
 import { useCountries } from "../hooks/useCountries";
 import { useMacroIndicators } from "../hooks/useMacroIndicators";
 import {
@@ -21,16 +21,41 @@ export function IndicatorsPage() {
   const updateIndicator = useUpdateIndicator();
   const deleteIndicator = useDeleteIndicator();
 
+  // --- Estado ---
   const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const MIN_YEAR = 1900;
+  const MAX_YEAR = currentYear + 10;
+
+  const [selectedYearState, setSelectedYear] = useState<number | null>(null);
+  const [extraYears, setExtraYears] = useState<number[]>([]);
+  const [addingYear, setAddingYear] = useState(false);
+  const [yearInput, setYearInput] = useState("");
   const [search, setSearch] = useState("");
   const [savingKey, setSavingKey] = useState<string | null>(null);
 
+  const selectedYear =
+    selectedYearState ?? (years?.length ? Math.max(...years) : currentYear);
+
+  // --- Memorias ---
+  // Años que tienen datos reales (backend). Estos no deben poder quitarse.
+  const yearsWithData = useMemo(
+    () =>
+      new Set<number>([
+        ...(years ?? []),
+        ...(indicators ?? []).map((i) => i.year),
+      ]),
+    [years, indicators],
+  );
+
   const yearOptions = useMemo(() => {
-    const set = new Set(years ?? []);
-    set.add(selectedYear);
+    const set = new Set<number>([
+      currentYear, // siempre presente
+      ...(years ?? []),
+      ...extraYears,
+      selectedYear,
+    ]);
     return Array.from(set).sort((a, b) => a - b);
-  }, [years, selectedYear]);
+  }, [currentYear, years, extraYears, selectedYear]);
 
   // Map: `${countryId}-${macroId}` -> { idIndicator, value }
   const cellMap = useMemo(() => {
@@ -56,11 +81,41 @@ export function IndicatorsPage() {
     );
   }, [countries, search]);
 
+  // --- Calculated Metrics ---
   const totalCells = (countries?.length ?? 0) * (macros?.length ?? 0);
   const filledCells = cellMap.size;
   const completionPct =
     totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
   const yearsTracked = years?.length ?? 0;
+
+  // --- Handlers ---
+  const yearInputValid = (() => {
+    const y = Number(yearInput);
+    return Number.isInteger(y) && y >= MIN_YEAR && y <= MAX_YEAR;
+  })();
+
+  const handleAddYear = () => {
+    if (!yearInputValid) return;
+    const y = Number(yearInput);
+    setExtraYears((prev) => (prev.includes(y) ? prev : [...prev, y]));
+    setSelectedYear(y);
+    setYearInput("");
+    setAddingYear(false);
+  };
+
+  const cancelAddYear = () => {
+    setYearInput("");
+    setAddingYear(false);
+  };
+
+  const canRemoveYear = (y: number) =>
+    y !== currentYear && !yearsWithData.has(y);
+
+  const handleRemoveYear = (y: number) => {
+    if (!canRemoveYear(y)) return;
+    setExtraYears((prev) => prev.filter((v) => v !== y));
+    if (y === selectedYear) setSelectedYear(currentYear);
+  };
 
   const handleCellCommit = (
     countryId: number,
@@ -173,7 +228,16 @@ export function IndicatorsPage() {
         </div>
       </div>
 
-      {/* Filters */}
+      <p className="mb-3 mt-2 rounded-md bg-surface px-3 py-2 text-xs text-text-secondary">
+        <span className="font-medium text-text-primary">Double-click</span> a
+        cell to edit its value. To remove a data point,{" "}
+        <span className="font-medium text-text-primary">
+          clear the field and press Enter
+        </span>
+        .
+      </p>
+
+      {/* Filters & Year Selector */}
       <div className="mb-3 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md bg-surface p-2">
         <div className="flex items-center gap-2 rounded bg-bg px-2 py-1">
           <Search size={14} className="text-text-secondary" />
@@ -184,20 +248,74 @@ export function IndicatorsPage() {
             className="w-48 bg-transparent font-mono text-xs outline-none placeholder:text-text-secondary"
           />
         </div>
-        <div className="flex items-center gap-1 rounded bg-bg p-0.5">
-          {yearOptions.map((y) => (
+
+        {/* Year Selector Component */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 rounded bg-bg p-0.5">
+            {yearOptions.map((y) => (
+              <div key={y} className="group relative">
+                <button
+                  onClick={() => setSelectedYear(y)}
+                  className={`rounded px-2 py-1 font-mono text-xs transition-colors ${
+                    y === selectedYear
+                      ? "bg-accent text-bg font-semibold"
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  {y}
+                </button>
+                {canRemoveYear(y) && (
+                  <button
+                    onClick={() => handleRemoveYear(y)}
+                    aria-label={`Remove year ${y}`}
+                    className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-surface text-text-secondary opacity-0 shadow transition-opacity hover:text-negative focus:opacity-100 group-hover:opacity-100"
+                  >
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          {addingYear ? (
+            <div className="flex items-center gap-1 rounded bg-bg px-2 py-1">
+              <input
+                autoFocus
+                type="number"
+                min={MIN_YEAR}
+                max={MAX_YEAR}
+                value={yearInput}
+                onChange={(e) => setYearInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddYear();
+                  if (e.key === "Escape") cancelAddYear();
+                }}
+                placeholder="e.g. 2024"
+                className="w-20 bg-transparent font-mono text-xs outline-none placeholder:text-text-secondary"
+              />
+              <button
+                onClick={handleAddYear}
+                disabled={!yearInputValid}
+                className="rounded bg-accent px-1.5 py-0.5 font-mono text-[10px] font-semibold text-bg disabled:opacity-40"
+              >
+                Add
+              </button>
+              <button
+                onClick={cancelAddYear}
+                className="text-text-secondary hover:text-text-primary"
+                aria-label="Cancel"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ) : (
             <button
-              key={y}
-              onClick={() => setSelectedYear(y)}
-              className={`rounded px-2 py-1 font-mono text-xs transition-colors ${
-                y === selectedYear
-                  ? "bg-accent text-bg font-semibold"
-                  : "text-text-secondary hover:text-text-primary"
-              }`}
+              onClick={() => setAddingYear(true)}
+              className="flex items-center gap-1 rounded bg-bg px-2 py-1 font-mono text-xs text-text-secondary transition-colors hover:text-text-primary"
             >
-              {y}
+              <Plus size={12} />
+              Add year
             </button>
-          ))}
+          )}
         </div>
       </div>
 

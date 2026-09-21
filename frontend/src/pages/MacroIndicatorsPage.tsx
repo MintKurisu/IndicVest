@@ -64,9 +64,20 @@ export function MacroIndicatorsPage() {
       .catch((err) => setServerError(getApiErrorMessage(err)));
   };
 
-  const handleDelete = (id: number) => {
-    if (!confirm("Delete this macroindicator?")) return;
-    deleteMacro.mutate(id);
+  const handleDelete = (macro: MacroIndicator) => {
+    const count = macro.indicatorsQuantity ?? 0;
+    if (count > 0) {
+      alert(
+        `Cannot delete "${macro.name}": it has ${count} indicator${
+          count === 1 ? "" : "s"
+        } associated. Delete those indicators first.`,
+      );
+      return;
+    }
+    if (!confirm(`Delete "${macro.name}"?`)) return;
+    deleteMacro.mutate(macro.idMacroIndicator, {
+      onError: (err) => alert(getApiErrorMessage(err)),
+    });
   };
 
   if (isLoading)
@@ -268,9 +279,14 @@ export function MacroIndicatorsPage() {
                         <Pencil size={16} />
                       </button>
                       <button
-                        onClick={() => handleDelete(macro.idMacroIndicator)}
-                        title="Delete"
-                        className="text-text-secondary hover:text-negative"
+                        onClick={() => handleDelete(macro)}
+                        disabled={(macro.indicatorsQuantity ?? 0) > 0}
+                        title={
+                          (macro.indicatorsQuantity ?? 0) > 0
+                            ? `Cannot delete: ${macro.indicatorsQuantity} indicator(s) associated`
+                            : "Delete"
+                        }
+                        className="text-text-secondary hover:text-negative disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-text-secondary"
                       >
                         <Trash2 size={16} />
                       </button>

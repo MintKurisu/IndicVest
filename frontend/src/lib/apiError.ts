@@ -2,6 +2,9 @@ import { isAxiosError } from 'axios'
 
 export function getApiErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
   if (isAxiosError(error)) {
+    const errorMessage = error.response?.data?.errorMessage
+    if (typeof errorMessage === 'string') return errorMessage
+
     const detail = error.response?.data?.detail
     if (typeof detail === 'string') return detail
 

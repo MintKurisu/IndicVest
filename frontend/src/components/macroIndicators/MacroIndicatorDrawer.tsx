@@ -11,7 +11,10 @@ const macroSchema = z.object({
     .number()
     .min(0.01, "Weight must be greater than 0")
     .max(1, "Weight cannot exceed 1.0"),
-  isHighBetter: z.boolean(),
+  isHighBetter: z.preprocess(
+    (val) => val === "true" || val === true,
+    z.boolean(),
+  ),
 });
 
 type MacroFormInput = z.input<typeof macroSchema>;
@@ -151,9 +154,14 @@ export function MacroIndicatorDrawer({
             </div>
             <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-hover">
               <div
-                className={`h-full rounded-full transition-all ${overBudget ? "bg-negative" : "bg-accent"}`}
+                className={`h-full rounded-full transition-all ${
+                  overBudget ? "bg-negative" : "bg-accent"
+                }`}
                 style={{
-                  width: `${Math.min(100, (liveWeight / Math.max(availableWeight, 0.0001)) * 100)}%`,
+                  width: `${Math.min(
+                    100,
+                    (liveWeight / Math.max(availableWeight, 0.0001)) * 100,
+                  )}%`,
                 }}
               />
             </div>
@@ -168,9 +176,7 @@ export function MacroIndicatorDrawer({
                 <input
                   type="radio"
                   value="true"
-                  {...register("isHighBetter", {
-                    setValueAs: (v) => v === "true" || v === true,
-                  })}
+                  {...register("isHighBetter")}
                   className="accent-positive"
                   defaultChecked
                 />
@@ -187,9 +193,7 @@ export function MacroIndicatorDrawer({
                 <input
                   type="radio"
                   value="false"
-                  {...register("isHighBetter", {
-                    setValueAs: (v) => v === "true" || v === true,
-                  })}
+                  {...register("isHighBetter")}
                   className="accent-negative"
                 />
                 <div>
@@ -202,6 +206,11 @@ export function MacroIndicatorDrawer({
                 </div>
               </label>
             </div>
+            {errors.isHighBetter && (
+              <p className="mt-1 text-xs text-negative">
+                {errors.isHighBetter.message}
+              </p>
+            )}
           </div>
 
           {serverError && (

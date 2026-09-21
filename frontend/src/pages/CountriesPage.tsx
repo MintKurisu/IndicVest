@@ -48,9 +48,20 @@ export function CountriesPage() {
       .catch((err) => setServerError(getApiErrorMessage(err)));
   };
 
-  const handleDelete = (id: number) => {
-    if (!confirm("Delete this country?")) return;
-    deleteCountry.mutate(id);
+  const handleDelete = (country: Country) => {
+    const count = country.indicatorsQuantity ?? 0;
+    if (count > 0) {
+      alert(
+        `Cannot delete ${country.name}: it has ${count} indicator${
+          count === 1 ? "" : "s"
+        } associated. Delete those indicators first.`,
+      );
+      return;
+    }
+    if (!confirm(`Delete ${country.name}?`)) return;
+    deleteCountry.mutate(country.idCountry, {
+      onError: (err) => alert(getApiErrorMessage(err)),
+    });
   };
 
   if (isLoading)
@@ -193,9 +204,14 @@ export function CountriesPage() {
                           <Pencil size={16} />
                         </button>
                         <button
-                          onClick={() => handleDelete(country.idCountry)}
-                          title="Delete"
-                          className="text-text-secondary hover:text-negative"
+                          onClick={() => handleDelete(country)}
+                          disabled={(country.indicatorsQuantity ?? 0) > 0}
+                          title={
+                            (country.indicatorsQuantity ?? 0) > 0
+                              ? `Cannot delete: ${country.indicatorsQuantity} indicator(s) associated`
+                              : "Delete"
+                          }
+                          className="text-text-secondary hover:text-negative disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-text-secondary"
                         >
                           <Trash2 size={16} />
                         </button>
