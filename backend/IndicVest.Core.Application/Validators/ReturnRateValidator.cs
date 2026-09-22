@@ -14,8 +14,8 @@ namespace IndicVest.Core.Application.Validators
             RuleFor(x => x.MaxReturnRate)
                 .GreaterThan(x => x.MinReturnRate)
                 .WithMessage("Maximum return rate must be greater than minimum return rate.")
-                .LessThanOrEqualTo(100)
-                .WithMessage("Maximum return rate cannot exceed 100 (values are percentage points).");
+                .LessThanOrEqualTo(1)
+                .WithMessage("Maximum return rate cannot exceed 100%.");
         }
     }
 }

@@ -12,8 +12,8 @@ namespace IndicVest.Core.Application.Services.Ranking
         private readonly IReturnRateService _returnRateService;
 
         private const decimal weightTolerance = 0.0001m;
-        private const decimal defaultMinRate = 2m;
-        private const decimal defaultMaxRate = 15m;
+        private const decimal defaultMinRate = 0.02m;
+        private const decimal defaultMaxRate = 0.15m;
 
         public RankingCalculationService(
             IIndicatorService indicatorService,
@@ -142,7 +142,7 @@ namespace IndicVest.Core.Application.Services.Ranking
             var rates = await _returnRateService.GetAll();
             var config = rates.FirstOrDefault();
 
-            return config != null && config.MinReturnRate > 0 && config.MaxReturnRate > 0
+            return config != null && config.MinReturnRate >= 0 && config.MaxReturnRate > config.MinReturnRate
                 ? (config.MinReturnRate, config.MaxReturnRate)
                 : (defaultMinRate, defaultMaxRate);
         }

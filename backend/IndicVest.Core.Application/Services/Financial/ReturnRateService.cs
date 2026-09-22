@@ -10,8 +10,8 @@ namespace IndicVest.Core.Application.Services.Financial
 {
     public class ReturnRateService : GenericService<ReturnRate, ReturnRateDto>, IReturnRateService
     {
-        private const decimal DefaultMinRate = 2.0m;
-        private const decimal DefaultMaxRate = 15.0m;
+        private const decimal DefaultMinRate = 0.02m;
+        private const decimal DefaultMaxRate = 0.15m;
 
         public ReturnRateService(IReturnRateRepository returnRateRepository, IMapper mapper)
             : base(returnRateRepository, mapper)
