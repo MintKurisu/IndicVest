@@ -42,11 +42,17 @@ export function SimulationResultsPanel({
   const diff = buildDiff(base, projected);
   const movedUp = diff.filter((d) => d.positionShift > 0).length;
   const movedDown = diff.filter((d) => d.positionShift < 0).length;
+
   const topRiser = [...diff].sort(
-    (a, b) => b.positionShift - a.positionShift,
+    (a, b) =>
+      b.positionShift - a.positionShift ||
+      b.projectedScore - b.baseScore - (a.projectedScore - a.baseScore),
   )[0];
+
   const topFaller = [...diff].sort(
-    (a, b) => a.positionShift - b.positionShift,
+    (a, b) =>
+      a.positionShift - b.positionShift ||
+      a.projectedScore - a.baseScore - (b.projectedScore - b.baseScore),
   )[0];
 
   return (
