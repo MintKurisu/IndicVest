@@ -11,11 +11,16 @@ namespace IndicVest.Core.Application.Services.Financial
     public class MacroIndicatorService : GenericService<MacroIndicator, MacroIndicatorDto>, IMacroIndicatorService
     {
         private readonly IMacroIndicatorRepository _macroIndicatorRepository;
+        private readonly IIndicatorRepository _indicatorRepository;
 
-        public MacroIndicatorService(IMacroIndicatorRepository macroIndicatorRepository, IMapper mapper)
+        public MacroIndicatorService(
+            IMacroIndicatorRepository macroIndicatorRepository,
+            IIndicatorRepository indicatorRepository,
+            IMapper mapper)
             : base(macroIndicatorRepository, mapper)
         {
             _macroIndicatorRepository = macroIndicatorRepository;
+            _indicatorRepository = indicatorRepository;
         }
 
         public override async Task<List<MacroIndicatorDto>> GetAllWithIncluded(List<string> properties)
@@ -62,6 +67,25 @@ namespace IndicVest.Core.Application.Services.Financial
                 throw new Domain.Exceptions.ValidationException($"Weight exceeds the limit. Available: {1m - otherWeight:F4}");
 
             return await base.UpdateAsync(dto, id);
+        }
+
+        public async Task<bool> DeleteAsync(int id, bool cascade)
+        {
+            if (cascade)
+                await _indicatorRepository.DeleteByMacroIndicatorIdAsync(id);
+
+            return await base.DeleteAsync(id);
+        }
+
+        public async Task<DeleteDependentsDto> GetDependentsAsync(int id)
+        {
+            var indicators = await _indicatorRepository.GetByMacroIndicatorIdAsync(id);
+
+            return new DeleteDependentsDto
+            {
+                IndicatorCount = indicators.Count,
+                Years = indicators.Select(i => i.Year).Distinct().OrderBy(y => y).ToList()
+            };
         }
 
         private static void EnsureUniqueName(List<MacroIndicatorDto> existing, string name, int? excludeId)

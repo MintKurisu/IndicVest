@@ -3,5 +3,9 @@ using IndicVest.Core.Application.Interfaces.Base;
 
 namespace IndicVest.Core.Application.Interfaces.Financial
 {
-    public interface IMacroIndicatorService : IGenericService<MacroIndicatorDto> { }
+    public interface IMacroIndicatorService : IGenericService<MacroIndicatorDto>
+    {
+        Task<bool> DeleteAsync(int id, bool cascade);
+        Task<DeleteDependentsDto> GetDependentsAsync(int id);
+    }
 }

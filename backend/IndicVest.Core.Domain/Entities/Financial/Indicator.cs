@@ -6,7 +6,7 @@
 
         public required int IdCountry { get; set; } // FK
 
-        public required int IdMacroIndicator { get; set; } //
+        public required int IdMacroIndicator { get; set; } 
 
         public decimal Value { get; set; }
 

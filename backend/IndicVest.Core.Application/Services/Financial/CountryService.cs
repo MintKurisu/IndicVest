@@ -11,11 +11,16 @@ namespace IndicVest.Core.Application.Services.Financial
     public class CountryService : GenericService<Country, CountryDto>, ICountryService
     {
         private readonly ICountryRepository _countryRepository;
+        private readonly IIndicatorRepository _indicatorRepository;
 
-        public CountryService(ICountryRepository countryRepository, IMapper mapper)
+        public CountryService(
+            ICountryRepository countryRepository,
+            IIndicatorRepository indicatorRepository,
+            IMapper mapper)
             : base(countryRepository, mapper)
         {
             _countryRepository = countryRepository;
+            _indicatorRepository = indicatorRepository;
         }
 
         public override async Task<List<CountryDto>> GetAllWithIncluded(List<string> properties)
@@ -51,6 +56,25 @@ namespace IndicVest.Core.Application.Services.Financial
 
             if (existing.Any(c => c.IdCountry != excludeId && c.ISOCode.Equals(isoCode, StringComparison.OrdinalIgnoreCase)))
                 throw new ConflictException("A country with this ISO code already exists.");
+        }
+
+        public async Task<bool> DeleteAsync(int id, bool cascade)
+        {
+            if (cascade)
+                await _indicatorRepository.DeleteByCountryIdAsync(id);
+
+            return await base.DeleteAsync(id);
+        }
+
+        public async Task<DeleteDependentsDto> GetDependentsAsync(int id)
+        {
+            var indicators = await _indicatorRepository.GetByCountryIdAsync(id);
+
+            return new DeleteDependentsDto
+            {
+                IndicatorCount = indicators.Count,
+                Years = indicators.Select(i => i.Year).Distinct().OrderBy(y => y).ToList()
+            };
         }
     }
 }

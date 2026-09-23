@@ -85,19 +85,37 @@ namespace IndicVestWebApi.Controllers
             return Ok(result);
         }
 
-        [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [HttpGet("{id}/dependents")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DeleteDependentsDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [SwaggerOperation(
-            Summary = "Delete country",
-            Description = "Deletes a country record from the system by its ID."
+            Summary = "Get country deletion dependents",
+            Description = "Retrieves the count and years of indicator records that would be deleted if this country were removed with cascade."
         )]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> GetDependents(int id)
         {
             var exists = await _countryService.GetById(id);
             if (exists is null) throw new NotFoundException(nameof(Country), id);
-            await _countryService.DeleteAsync(id);
+
+            var result = await _countryService.GetDependentsAsync(id);
+            return Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Delete country",
+            Description = "Deletes a country record by its ID. Returns 409 if it has associated indicators, unless cascade=true is passed."
+        )]
+        public async Task<IActionResult> Delete(int id, [FromQuery] bool cascade = false)
+        {
+            var exists = await _countryService.GetById(id);
+            if (exists is null) throw new NotFoundException(nameof(Country), id);
+            await _countryService.DeleteAsync(id, cascade);
             return NoContent();
         }
     }
