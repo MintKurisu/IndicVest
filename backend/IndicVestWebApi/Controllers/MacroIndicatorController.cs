@@ -115,19 +115,37 @@ namespace IndicVestWebApi.Controllers
             return Ok(result);
         }
 
-        [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [HttpGet("{id}/dependents")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DeleteDependentsDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [SwaggerOperation(
-            Summary = "Delete macroindicator",
-            Description = "Deletes a macroindicator entry from the system by its ID."
-        )]
-        public async Task<IActionResult> Delete(int id)
+             Summary = "Get macroindicator deletion dependents",
+             Description = "Retrieves the count and years of indicator records that would be deleted if this macroindicator were removed with cascade."
+         )]
+        public async Task<IActionResult> GetDependents(int id)
         {
             var exists = await _macroIndicatorService.GetById(id);
             if (exists is null) throw new NotFoundException(nameof(MacroIndicator), id);
-            await _macroIndicatorService.DeleteAsync(id);
+
+            var result = await _macroIndicatorService.GetDependentsAsync(id);
+            return Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [SwaggerOperation(
+            Summary = "Delete macroindicator",
+            Description = "Deletes a macroindicator entry by its ID. Returns 409 if it has associated indicators, unless cascade=true is passed."
+        )]
+        public async Task<IActionResult> Delete(int id, [FromQuery] bool cascade = false)
+        {
+            var exists = await _macroIndicatorService.GetById(id);
+            if (exists is null) throw new NotFoundException(nameof(MacroIndicator), id);
+            await _macroIndicatorService.DeleteAsync(id, cascade);
             return NoContent();
         }
     }
