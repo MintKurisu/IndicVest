@@ -1,5 +1,10 @@
 import { apiClient } from "./client";
-import type { MacroIndicator, SaveMacroIndicatorPayload, RemainingWeightInfo } from "./types";
+import type {
+  MacroIndicator,
+  SaveMacroIndicatorPayload,
+  RemainingWeightInfo,
+  DeleteDependents,
+} from "./types";
 
 export const macroIndicatorApi = {
   getAll: () =>
@@ -10,6 +15,10 @@ export const macroIndicatorApi = {
     apiClient
       .get<RemainingWeightInfo>("/macroindicator/remaining-weight")
       .then((r) => r.data),
+  getDependents: (id: number) =>
+    apiClient
+      .get<DeleteDependents>(`/macroindicator/${id}/dependents`)
+      .then((r) => r.data),
   create: (payload: SaveMacroIndicatorPayload) =>
     apiClient
       .post<MacroIndicator>("/macroindicator", payload)
@@ -18,5 +27,6 @@ export const macroIndicatorApi = {
     apiClient
       .put<MacroIndicator>(`/macroindicator/${id}`, payload)
       .then((r) => r.data),
-  remove: (id: number) => apiClient.delete(`/macroindicator/${id}`),
+  remove: (id: number, cascade = false) =>
+    apiClient.delete(`/macroindicator/${id}`, { params: { cascade } }),
 };

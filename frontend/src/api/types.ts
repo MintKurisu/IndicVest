@@ -100,4 +100,7 @@ export interface SimulationRequest {
   configuration: MacroWithWeight[];
 }
 
-
+export interface DeleteDependents {
+  indicatorCount: number;
+  years: number[];
+}

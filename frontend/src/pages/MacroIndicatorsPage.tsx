@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PieChart, Pie, Cell } from "recharts";
 import { Plus, Pencil, Trash2, Scale } from "lucide-react";
 import {
@@ -9,8 +10,10 @@ import {
   useDeleteMacroIndicator,
 } from "../hooks/useMacroIndicators";
 import { MacroIndicatorDrawer } from "../components/macroIndicators/MacroIndicatorDrawer";
+import { ConfirmDeleteModal } from "../components/common/ConfirmDeleteModal";
+import { macroIndicatorApi } from "../api/macroIndicatorApi";
 import { getApiErrorMessage } from "../lib/apiError";
-import type { MacroIndicator } from "../api/types";
+import type { MacroIndicator, DeleteDependents } from "../api/types";
 
 const PALETTE = [
   "#38bdf8",
@@ -33,6 +36,14 @@ export function MacroIndicatorsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<MacroIndicator | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MacroIndicator | null>(null);
+
+  const dependentsQuery = useQuery<DeleteDependents>({
+    queryKey: ["macroIndicator", deleteTarget?.idMacroIndicator, "dependents"],
+    queryFn: () =>
+      macroIndicatorApi.getDependents(deleteTarget!.idMacroIndicator),
+    enabled: !!deleteTarget,
+  });
 
   const openCreate = () => {
     setEditing(null);
@@ -65,19 +76,18 @@ export function MacroIndicatorsPage() {
   };
 
   const handleDelete = (macro: MacroIndicator) => {
-    const count = macro.indicatorsQuantity ?? 0;
-    if (count > 0) {
-      alert(
-        `Cannot delete "${macro.name}": it has ${count} indicator${
-          count === 1 ? "" : "s"
-        } associated. Delete those indicators first.`,
-      );
-      return;
-    }
-    if (!confirm(`Delete "${macro.name}"?`)) return;
-    deleteMacro.mutate(macro.idMacroIndicator, {
-      onError: (err) => alert(getApiErrorMessage(err)),
-    });
+    setDeleteTarget(macro);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteMacro.mutate(
+      { id: deleteTarget.idMacroIndicator, cascade: true },
+      {
+        onSuccess: () => setDeleteTarget(null),
+        onError: (err) => alert(getApiErrorMessage(err)),
+      },
+    );
   };
 
   if (isLoading)
@@ -280,13 +290,8 @@ export function MacroIndicatorsPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(macro)}
-                        disabled={(macro.indicatorsQuantity ?? 0) > 0}
-                        title={
-                          (macro.indicatorsQuantity ?? 0) > 0
-                            ? `Cannot delete: ${macro.indicatorsQuantity} indicator(s) associated`
-                            : "Delete"
-                        }
-                        className="text-text-secondary hover:text-negative disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-text-secondary"
+                        title="Delete"
+                        className="text-text-secondary hover:text-negative"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -308,6 +313,20 @@ export function MacroIndicatorsPage() {
         serverError={serverError}
         availableWeight={availableForNew}
       />
+
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          open={!!deleteTarget}
+          entityName={deleteTarget.name}
+          indicatorCount={dependentsQuery.data?.indicatorCount ?? 0}
+          years={dependentsQuery.data?.years ?? []}
+          extraWarning={`Its weight (${(deleteTarget.weight * 100).toFixed(1)}%) will be released, so the remaining macroindicators will no longer sum to 100%.`}
+          isLoading={dependentsQuery.isLoading}
+          isDeleting={deleteMacro.isPending}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={confirmDelete}
+        />
+      )}
     </div>
   );
 }

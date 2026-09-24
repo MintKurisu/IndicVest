@@ -35,7 +35,8 @@ export function useUpdateCountry() {
 export function useDeleteCountry() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => countryApi.remove(id),
+    mutationFn: ({ id, cascade }: { id: number; cascade?: boolean }) =>
+      countryApi.remove(id, cascade),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: COUNTRIES_KEY })
     },

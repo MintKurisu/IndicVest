@@ -47,7 +47,8 @@ export function useUpdateMacroIndicator() {
 export function useDeleteMacroIndicator() {
   const invalidate = useInvalidateMacros()
   return useMutation({
-    mutationFn: (id: number) => macroIndicatorApi.remove(id),
+    mutationFn: ({ id, cascade }: { id: number; cascade?: boolean }) =>
+      macroIndicatorApi.remove(id, cascade),
     onSuccess: invalidate,
   })
 }

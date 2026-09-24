@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Globe2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   useCountries,
   useCreateCountry,
@@ -8,8 +9,10 @@ import {
 } from "../hooks/useCountries";
 import { useMacroIndicators } from "../hooks/useMacroIndicators";
 import { CountryDrawer } from "../components/countries/CountryDrawer";
+import { ConfirmDeleteModal } from "../components/common/ConfirmDeleteModal";
+import { countryApi } from "../api/countryApi";
 import { getApiErrorMessage } from "../lib/apiError";
-import type { Country } from "../api/types";
+import type { Country, DeleteDependents } from "../api/types";
 
 export function CountriesPage() {
   const { data: countries, isLoading, isError } = useCountries();
@@ -21,6 +24,13 @@ export function CountriesPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingCountry, setEditingCountry] = useState<Country | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Country | null>(null);
+
+  const dependentsQuery = useQuery<DeleteDependents>({
+    queryKey: ["country", deleteTarget?.idCountry, "dependents"],
+    queryFn: () => countryApi.getDependents(deleteTarget!.idCountry),
+    enabled: !!deleteTarget,
+  });
 
   const openCreate = () => {
     setEditingCountry(null);
@@ -49,19 +59,18 @@ export function CountriesPage() {
   };
 
   const handleDelete = (country: Country) => {
-    const count = country.indicatorsQuantity ?? 0;
-    if (count > 0) {
-      alert(
-        `Cannot delete ${country.name}: it has ${count} indicator${
-          count === 1 ? "" : "s"
-        } associated. Delete those indicators first.`,
-      );
-      return;
-    }
-    if (!confirm(`Delete ${country.name}?`)) return;
-    deleteCountry.mutate(country.idCountry, {
-      onError: (err) => alert(getApiErrorMessage(err)),
-    });
+    setDeleteTarget(country);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteCountry.mutate(
+      { id: deleteTarget.idCountry, cascade: true },
+      {
+        onSuccess: () => setDeleteTarget(null),
+        onError: (err) => alert(getApiErrorMessage(err)),
+      },
+    );
   };
 
   if (isLoading)
@@ -205,13 +214,8 @@ export function CountriesPage() {
                         </button>
                         <button
                           onClick={() => handleDelete(country)}
-                          disabled={(country.indicatorsQuantity ?? 0) > 0}
-                          title={
-                            (country.indicatorsQuantity ?? 0) > 0
-                              ? `Cannot delete: ${country.indicatorsQuantity} indicator(s) associated`
-                              : "Delete"
-                          }
-                          className="text-text-secondary hover:text-negative disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-text-secondary"
+                          title="Delete"
+                          className="text-text-secondary hover:text-negative"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -233,6 +237,19 @@ export function CountriesPage() {
         isSubmitting={createCountry.isPending || updateCountry.isPending}
         serverError={serverError}
       />
+
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          open={!!deleteTarget}
+          entityName={deleteTarget.name}
+          indicatorCount={dependentsQuery.data?.indicatorCount ?? 0}
+          years={dependentsQuery.data?.years ?? []}
+          isLoading={dependentsQuery.isLoading}
+          isDeleting={deleteCountry.isPending}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={confirmDelete}
+        />
+      )}
     </div>
   );
 }
