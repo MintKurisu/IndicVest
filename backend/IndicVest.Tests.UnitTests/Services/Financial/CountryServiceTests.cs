@@ -121,7 +121,6 @@ namespace IndicVest.Tests.UnitTests.Services.Financial
                 .Setup(r => r.GetAllListAsync())
                 .ReturnsAsync(new List<Country>());
 
-            // AGREGAR ESTA LÍNEA:
             _mapperMock
                 .Setup(m => m.Map<List<CountryDto>>(It.IsAny<List<Country>>()))
                 .Returns(new List<CountryDto>());
@@ -215,7 +214,6 @@ namespace IndicVest.Tests.UnitTests.Services.Financial
                 .Setup(r => r.GetAllListAsync())
                 .ReturnsAsync(new List<Country>());
 
-            // AGREGAR ESTA LÍNEA:
             _mapperMock
                 .Setup(m => m.Map<List<CountryDto>>(It.IsAny<List<Country>>()))
                 .Returns(new List<CountryDto>());
